@@ -1,0 +1,966 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "description" : "No description",
+    "version" : "1.0.0",
+    "title" : "BillyEU",
+    "contact" : { }
+  },
+  "host" : "thecontactsapi.restlet.net",
+  "basePath" : "/v1",
+  "schemes" : [ "https" ],
+  "consumes" : [ "application/json" ],
+  "produces" : [ "application/json" ],
+  "paths" : {
+    "/invoice" : {
+      "post" : {
+        "tags" : [ "Invoices" ],
+        "summary" : "Creates a new invoice",
+        "description" : "Creates a new invoice and - if wished - books it. \n\nNot booked invoices have no invoice number and can be deleted. Use this feature if you want to manually control the print invoices before sending them to the customers. If they are ok, you can book them. If not, you can correct / delete them.",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "book_invoice",
+          "in" : "header",
+          "required" : true,
+          "type" : "boolean",
+          "description" : "If TRUE, create the invoice and book it. If FALSE, just create it.",
+          "default" : true
+        }, {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/invoice"
+          }
+        } ],
+        "responses" : {
+          "201" : {
+            "description" : "Invoice created"
+          },
+          "400" : {
+            "description" : "Invalid invoice",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized access",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "500" : {
+            "description" : "Unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/invoices" : {
+      "get" : {
+        "summary" : "Finds invoices by tag",
+        "description" : "Returns a list of invoices having the specified tags. Already adjusted invoices will be ignored.",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : true,
+          "type" : "number",
+          "description" : "Offset for the search.",
+          "default" : 0.0,
+          "minimum" : 0
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : true,
+          "type" : "number",
+          "description" : "Max. number of invoices to be returned.",
+          "default" : 20.0,
+          "minimum" : 1,
+          "maximum" : 20
+        }, {
+          "name" : "tags",
+          "in" : "header",
+          "required" : true,
+          "type" : "array",
+          "description" : "Tags to search for.",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          },
+          "x-example" : "[\n  {\n    name: \"customer_id\",\n    value: \"12345\"\n  }\n]"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Invoices found",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/invoice"
+              }
+            },
+            "headers" : {
+              "X-Total-Count" : {
+                "type" : "number",
+                "description" : "Number of invoices found"
+              }
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized access",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "404" : {
+            "description" : "Out of bound access"
+          },
+          "500" : {
+            "description" : "Unknown error",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Deletes invoices",
+        "description" : "Deletes invoices having one or more specific tags",
+        "parameters" : [ {
+          "name" : "tags",
+          "in" : "header",
+          "required" : false,
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Invoices deleted",
+            "headers" : {
+              "X-Total-Count" : {
+                "type" : "integer",
+                "description" : "Number of deleted invoices"
+              }
+            }
+          },
+          "304" : {
+            "description" : "Unable to delete already booked invoices.",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            },
+            "headers" : {
+              "X-Total-Count" : {
+                "type" : "string",
+                "description" : "Number of already booked invoices"
+              }
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized access",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "404" : {
+            "description" : "No invoices found",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "500" : {
+            "description" : "Unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          }
+        }
+      },
+      "patch" : {
+        "summary" : "Books invoices",
+        "description" : "Books invoices having one or more specific tags. Already booked invoices will be ignored.",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/definitions/tag"
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Invoices booked",
+            "headers" : {
+              "X-Total-Count" : {
+                "type" : "integer",
+                "description" : "Number of booked invoices"
+              }
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized access",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "404" : {
+            "description" : "No invoices found",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "500" : {
+            "description" : "Unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}" : {
+      "get" : {
+        "summary" : "Finds invoice by id",
+        "description" : "Find invoice by id",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Invoice found",
+            "schema" : {
+              "$ref" : "#/definitions/invoice"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized access",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "404" : {
+            "description" : "Status 404"
+          },
+          "500" : {
+            "description" : "Unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          }
+        }
+      },
+      "put" : {
+        "summary" : "Updates tags",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/definitions/tag"
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200"
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Deletes an invoice",
+        "description" : "Deletes an unbooked invoice",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Invoice deleted"
+          },
+          "403" : {
+            "description" : "Unauthorized access",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "404" : {
+            "description" : "Invoice not found",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "405" : {
+            "description" : "Unable to delete an already booked invoice.",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "500" : {
+            "description" : "Unexpected error"
+          }
+        }
+      },
+      "patch" : {
+        "summary" : "Books an invoice",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Invoice booked."
+          },
+          "304" : {
+            "description" : "Invoice already booked"
+          },
+          "403" : {
+            "description" : "Unauthorized access",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          },
+          "404" : {
+            "description" : "Invoice not found"
+          },
+          "500" : {
+            "description" : "Unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/error"
+            }
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "id",
+        "in" : "path",
+        "required" : true,
+        "type" : "string"
+      } ]
+    },
+    "/booking" : {
+      "post" : {
+        "summary" : "Performs a new booking",
+        "description" : "Cancels / writes off / adjusts all open current accounts identified by the specified tags or books a payment / credit memo.",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "tags",
+          "in" : "header",
+          "required" : true,
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          }
+        }, {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/new_booking"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200"
+          }
+        }
+      }
+    },
+    "/current_accounts" : {
+      "get" : {
+        "summary" : "Finds current accounts by tag(s)",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : true,
+          "type" : "integer",
+          "description" : "Offset for the search",
+          "default" : 0,
+          "minimum" : 0
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : true,
+          "type" : "integer",
+          "description" : "Max. number of current accounts to be returned.",
+          "default" : 20,
+          "minimum" : 1,
+          "maximum" : 20
+        }, {
+          "name" : "sort_order",
+          "in" : "query",
+          "required" : true,
+          "type" : "integer",
+          "description" : "1 = by date descending, 2 = by date ascending",
+          "default" : 1,
+          "enum" : [ 1, 2 ]
+        }, {
+          "name" : "tags",
+          "in" : "header",
+          "required" : true,
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          }
+        }, {
+          "name" : "current_accounts_type",
+          "in" : "header",
+          "required" : true,
+          "type" : "integer",
+          "description" : "0 = all, 1 = only not balanced current accounts, 2 = only balanced current accounts",
+          "default" : 1,
+          "enum" : [ 0, 1, 2 ]
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/current_account"
+              }
+            },
+            "headers" : {
+              "X-Total-Count" : {
+                "type" : "string",
+                "description" : "Number of current accounts found"
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Archives current accounts",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200"
+          }
+        }
+      }
+    },
+    "/current_accounts/{id}/booking" : {
+      "post" : {
+        "summary" : "Performs a booking on a current account",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/new_booking"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200"
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "id",
+        "in" : "path",
+        "required" : true,
+        "type" : "string"
+      } ]
+    },
+    "/current_accounts/{id}/rebooking" : {
+      "post" : {
+        "summary" : "Performs a rebooking of a current account",
+        "description" : "Rebooks (replaces the tags of) a current account.",
+        "parameters" : [ {
+          "name" : "tags",
+          "in" : "header",
+          "required" : true,
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200"
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "id",
+        "in" : "path",
+        "required" : true,
+        "type" : "string"
+      } ]
+    },
+    "/current_accounts/{currentAccountId}/entries/{entryId}/booking" : {
+      "post" : {
+        "summary" : "Performs a booking on a entry",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/new_booking"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200"
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "currentAccountId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string"
+      }, {
+        "name" : "entryId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string"
+      } ]
+    }
+  },
+  "definitions" : {
+    "tag" : {
+      "type" : "object",
+      "required" : [ "type", "value" ],
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "description" : "Tag type"
+        },
+        "value" : {
+          "type" : "string",
+          "description" : "Tag value"
+        }
+      },
+      "description" : "An tag is used to save specific information from an external system (e.g. customer id, contract id, batch job id etc.) into the invoice in order to be able to identify it later."
+    },
+    "error" : {
+      "type" : "object",
+      "required" : [ "code", "internalMessage", "moreInfo", "userMessage" ],
+      "properties" : {
+        "userMessage" : {
+          "type" : "string",
+          "description" : "User error message"
+        },
+        "internalMessage" : {
+          "type" : "string",
+          "description" : "Internal error message"
+        },
+        "code" : {
+          "type" : "number",
+          "description" : "Error code"
+        },
+        "moreInfo" : {
+          "type" : "string",
+          "description" : "URL for more informations"
+        }
+      },
+      "description" : "Error object"
+    },
+    "delivery_address" : {
+      "type" : "object",
+      "required" : [ "country" ],
+      "properties" : {
+        "country" : {
+          "type" : "string",
+          "description" : "Residence country of the receiver of the items.\n\nSee ISO 3166-1 alpha-2 standard for possible values.",
+          "minLength" : 2,
+          "maxLength" : 2,
+          "example" : "DE"
+        },
+        "vat_id" : {
+          "type" : "string",
+          "description" : "Vat Id of the receiver of the charged items.",
+          "example" : "DE123456789"
+        },
+        "address_lines" : {
+          "type" : "array",
+          "description" : "Delivery address lines as they will appear on the invoice",
+          "items" : {
+            "type" : "string"
+          },
+          "example" : "Max Mustermann"
+        }
+      }
+    },
+    "invoice" : {
+      "type" : "object",
+      "required" : [ "billing_address", "charged_from", "charged_till", "due_date", "invoice_date", "invoice_sections", "invoice_type", "shipping_costs", "tags" ],
+      "properties" : {
+        "invoice_date" : {
+          "type" : "string",
+          "format" : "date",
+          "description" : "Invoice date (in RFC 3339 format).",
+          "example" : "2017-09-25"
+        },
+        "invoice_type" : {
+          "type" : "number",
+          "description" : "Invoice type (net / gross). All item prices are first transformed into the corresponding prices before calculating the vat amounts / totals.",
+          "enum" : [ 0.0, 1.0 ],
+          "example" : 0
+        },
+        "due_date" : {
+          "type" : "string",
+          "format" : "date",
+          "description" : "Invoice due date (in RFC 3339 format).",
+          "example" : "2017-10-25"
+        },
+        "charged_from" : {
+          "type" : "string",
+          "format" : "date",
+          "description" : "First day of the charged period (in RFC 3339 format).",
+          "example" : "2017-09-01"
+        },
+        "charged_till" : {
+          "type" : "string",
+          "format" : "date",
+          "description" : "Last day of the charged period (in RFC 3339 format).",
+          "example" : "2017-09-31"
+        },
+        "currency" : {
+          "type" : "string",
+          "description" : "Currency in which the invoice will be booked.\n\nSee ISO4217 standard for possible values.",
+          "default" : "EUR",
+          "minLength" : 3,
+          "maxLength" : 3,
+          "example" : "EUR"
+        },
+        "payment_due_date" : {
+          "type" : "string",
+          "format" : "date",
+          "description" : "Due date (in RFC 3339 format) of an automatic payment (direct debit / credit card / paypal etc.). If empty, the invoice due date will be used instead.",
+          "example" : "2017-10-15"
+        },
+        "invoice_sections" : {
+          "type" : "array",
+          "description" : "An invoice can have only one section (single invoice) or more than one (collective invoice).",
+          "items" : {
+            "$ref" : "#/definitions/invoice_section"
+          }
+        },
+        "discount" : {
+          "$ref" : "#/definitions/discount"
+        },
+        "billing_address" : {
+          "required" : [ "country" ],
+          "type" : "object",
+          "description" : "Invoice receiver's address.",
+          "properties" : {
+            "country" : {
+              "type" : "string",
+              "description" : "Residence country of the invoice receiver.\n\nSee ISO 3166-1 alpha-2 standard for possible values.",
+              "minLength" : 2,
+              "maxLength" : 2,
+              "example" : "DE"
+            },
+            "address_lines" : {
+              "type" : "array",
+              "description" : "Billing address lines as they will appear on the invoice",
+              "items" : {
+                "type" : "string"
+              },
+              "example" : "Max Muster"
+            }
+          }
+        },
+        "delivery_address" : {
+          "$ref" : "#/definitions/delivery_address"
+        },
+        "country_of_delivery" : {
+          "type" : "string",
+          "description" : "The country the item is being delivered from.\n\nSee ISO 3166-1 alpha-2 for possible values.",
+          "minLength" : 2,
+          "maxLength" : 2,
+          "example" : "DE"
+        },
+        "tags" : {
+          "type" : "array",
+          "description" : "Invoice tags",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          },
+          "example" : "[\n  {\n    name: \"customer_id\",\n    value: \"12345\"\n  },\n  {\n    name: \"batch_job_id\",\n    value: \"55555\"\n  }\n]"
+        },
+        "shipping_costs" : {
+          "type" : "number",
+          "description" : "Delivery costs.",
+          "default" : 0.0
+        }
+      },
+      "description" : "General invoice informations."
+    },
+    "invoice_section" : {
+      "type" : "object",
+      "required" : [ "invoice_lines", "price_type" ],
+      "properties" : {
+        "invoice_lines" : {
+          "type" : "array",
+          "description" : "Section's invoice lines.",
+          "items" : {
+            "$ref" : "#/definitions/invoice_line"
+          }
+        },
+        "discount" : {
+          "$ref" : "#/definitions/discount"
+        },
+        "delivery_address" : {
+          "$ref" : "#/definitions/delivery_address"
+        },
+        "tags" : {
+          "type" : "array",
+          "description" : "Invoice section tags.",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          },
+          "example" : "[\n  {\n    name: \"contract_id\",\n    value: \"11111\"\n  }\n]"
+        },
+        "price_type" : {
+          "type" : "integer",
+          "description" : "The price type of the items included in this section (0 = net, 1 = gross).",
+          "default" : 0,
+          "enum" : [ 0, 1 ]
+        }
+      },
+      "description" : "Sections are used to group invoice lines in order to be billed together (for example all invoice line belonging to the same contract)."
+    },
+    "invoice_line" : {
+      "type" : "object",
+      "required" : [ "item_price", "items", "quantity" ],
+      "properties" : {
+        "quantity" : {
+          "type" : "number",
+          "description" : "Number of unit lines to be charged.",
+          "default" : 1.0
+        },
+        "item_price" : {
+          "type" : "number",
+          "description" : "The unit price of the items belonging to an item line.",
+          "minimum" : 0
+        },
+        "discount" : {
+          "$ref" : "#/definitions/discount"
+        },
+        "country_of_delivery" : {
+          "type" : "string",
+          "description" : "Country the items are being delivered from.\n\nSee ISO 3166-1 alpha-2 standard for possible values."
+        },
+        "delivery_address" : {
+          "$ref" : "#/definitions/delivery_address"
+        },
+        "items" : {
+          "type" : "array",
+          "description" : "Items included in this item line.",
+          "items" : {
+            "$ref" : "#/definitions/item"
+          }
+        },
+        "tags" : {
+          "type" : "array",
+          "description" : "Invoice line tags.",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          },
+          "example" : "[\n  {\n    name: \"description\",\n    value: \"Monthly subscription NYT\"\n  }\n]"
+        }
+      },
+      "description" : "A group of items to be charged together. "
+    },
+    "item" : {
+      "type" : "object",
+      "required" : [ "delivered_on", "free_of_charge", "tags" ],
+      "properties" : {
+        "delivered_on" : {
+          "type" : "string",
+          "format" : "date",
+          "description" : "Delivery date of the item.",
+          "example" : "2017-09-15"
+        },
+        "free_of_charge" : {
+          "type" : "boolean",
+          "default" : false
+        },
+        "tags" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          },
+          "example" : "[\n  {\n    name: \"item_id\",\n    value: \"ABC1234\"\n  }\n]"
+        }
+      },
+      "description" : "Item to be billed."
+    },
+    "discount" : {
+      "type" : "object",
+      "required" : [ "discount_value", "level", "type" ],
+      "properties" : {
+        "type" : {
+          "type" : "integer",
+          "description" : "Discount type (1 = percentage, 2 = amount).",
+          "enum" : [ 1, 2 ]
+        },
+        "level" : {
+          "type" : "integer",
+          "description" : "Discount level (1 = items and shipping costs, 2 = only items, 3 = only shipping costs).",
+          "enum" : [ 1, 2, 3 ]
+        },
+        "discount_value" : {
+          "type" : "number",
+          "description" : "Discount value.",
+          "minimum" : 0
+        },
+        "tags" : {
+          "type" : "array",
+          "description" : "Discount tags.",
+          "items" : {
+            "$ref" : "#/definitions/tag"
+          },
+          "example" : "[\n  {\n    name: \"discount_id\",\n    value: \"12345\"\n  }\n]"
+        }
+      },
+      "description" : "discount information"
+    },
+    "new_booking" : {
+      "type" : "object",
+      "properties" : {
+        "type" : {
+          "type" : "string",
+          "enum" : [ "PAYMENT", "CANCELLATION", "WRITE_OFF", "CREDIT_MEMO", "ADJUSTMENT", "DUNNING_COSTS" ]
+        },
+        "book_date" : {
+          "type" : "string",
+          "format" : "date"
+        },
+        "amount" : {
+          "type" : "number",
+          "description" : "Mandatory if the booking type is PAYMENT, CREDIT_MEMO or DUNNING_COSTS. Otherwise it must be empty if the booking is performed on entry level.",
+          "minimum" : 0.01
+        },
+        "note" : {
+          "type" : "string",
+          "description" : "User note"
+        }
+      }
+    },
+    "current_account" : {
+      "type" : "object",
+      "required" : [ "balanced", "booking_date", "booking_id", "booking_number", "booking_type", "currency", "gross_amount", "id", "net_amount", "vat_amount" ],
+      "properties" : {
+        "id" : {
+          "type" : "integer"
+        },
+        "booking_number" : {
+          "type" : "string"
+        },
+        "booking_date" : {
+          "type" : "string",
+          "format" : "date"
+        },
+        "due_date" : {
+          "type" : "string",
+          "format" : "date",
+          "description" : "Internal due date. Only used when booking_type is INVOICE."
+        },
+        "booking_type" : {
+          "type" : "string",
+          "enum" : [ "INVOICE", "PAYMENT", "CANCELLATION", "WRITE_OFF", "CREDIT_MEMO", "REBOOKING", "ADJUSTMENT_BOOKING" ]
+        },
+        "net_amount" : {
+          "type" : "number"
+        },
+        "gross_amount" : {
+          "type" : "number"
+        },
+        "vat_amount" : {
+          "type" : "number"
+        },
+        "vat_percentage" : {
+          "type" : "number"
+        },
+        "vat_country" : {
+          "type" : "string"
+        },
+        "balanced" : {
+          "type" : "boolean",
+          "description" : "true, if the current account is balanced, false otherwise."
+        },
+        "balance_group" : {
+          "type" : "integer",
+          "description" : "If balanced, the id of the balance group to which the current account belongs. The gross sum of the balance group's current accounts must be 0."
+        },
+        "currency" : {
+          "type" : "string",
+          "description" : "Currency in which the current account is booked (ISO4217).",
+          "default" : "EUR",
+          "minLength" : 3,
+          "maxLength" : 3,
+          "example" : "EUR"
+        },
+        "booked_on" : {
+          "type" : "integer",
+          "description" : "Id of the current account on which it was booked."
+        },
+        "booked_on_entry" : {
+          "type" : "integer",
+          "description" : "Id of the entry on which the current account was booked."
+        },
+        "booking_id" : {
+          "type" : "integer",
+          "description" : "Id of the booking that created the current account."
+        }
+      }
+    },
+    "entry" : {
+      "type" : "object",
+      "required" : [ "booking_date", "currency", "current_account_id", "gross_amount", "id", "net_amount", "vat_amount", "vat_country", "vat_id", "vat_percentage" ],
+      "properties" : {
+        "id" : {
+          "type" : "integer"
+        },
+        "current_account_id" : {
+          "type" : "integer"
+        },
+        "invoice_id" : {
+          "type" : "integer"
+        },
+        "invoice_line_id" : {
+          "type" : "integer"
+        },
+        "invoice_item_id" : {
+          "type" : "integer"
+        },
+        "currency" : {
+          "type" : "string",
+          "description" : "Currency in which the entry is booked (ISO4217)."
+        },
+        "entry_type" : {
+          "type" : "string",
+          "enum" : [ "INVOICE_LINE", "CANCELLATION", "WRITE_OFF", "PAYMENT", "CREDIT_MEMO", "REBOOKING", "ADJUSTMENT_BOOKING" ]
+        },
+        "booking_date" : {
+          "type" : "string",
+          "format" : "date"
+        },
+        "gross_amount" : {
+          "type" : "number"
+        },
+        "net_amount" : {
+          "type" : "number"
+        },
+        "vat_percentage" : {
+          "type" : "number"
+        },
+        "vat_amount" : {
+          "type" : "number"
+        },
+        "vat_country" : {
+          "type" : "string"
+        },
+        "vat_id" : {
+          "type" : "integer"
+        }
+      }
+    }
+  }
+}
